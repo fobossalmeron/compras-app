@@ -9,7 +9,7 @@ interface Requisicion {
   notas: string;
 }
 
-export default function TableroRequisiciones() {
+function TableroRequisiciones() {
   const [requisiciones, setRequisiciones] = useState<Requisicion[]>([]);
 
   useEffect(() => {
@@ -47,3 +47,5 @@ export default function TableroRequisiciones() {
     </div>
   );
 }
+
+export default TableroRequisiciones;

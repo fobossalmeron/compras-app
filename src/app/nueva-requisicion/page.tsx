@@ -1,3 +1,4 @@
+import React from 'react';
 import FormularioRequisicion from '../components/FormularioRequisicion';
 
 export default function NuevaRequisicion() {
