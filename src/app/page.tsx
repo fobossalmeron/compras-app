@@ -1,17 +1,17 @@
-'use client';
-
-import Link from 'next/link';
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-4xl font-bold mb-8">Sistema de Requisiciones</h1>
-      <div className="space-y-4">
-        <Link href="/nueva-requisicion" className="block w-64 px-4 py-2 text-center bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-300">
-          Hacer una Requisición
+    <div className="space-y-8">
+      <h1 className="text-4xl font-bold mb-6">Bienvenido al Sistema de Requisiciones</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Link href="/nueva-requisicion" className="block p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition duration-300">
+          <h2 className="text-2xl font-semibold mb-2">Nueva Requisición</h2>
+          <p className="text-gray-600">Crea una nueva solicitud de requisición para tu departamento.</p>
         </Link>
-        <Link href="/tablero" className="block w-64 px-4 py-2 text-center bg-green-500 text-white rounded-md hover:bg-green-600 transition duration-300">
-          Consultar Requisiciones
+        <Link href="/tablero" className="block p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition duration-300">
+          <h2 className="text-2xl font-semibold mb-2">Tablero de Requisiciones</h2>
+          <p className="text-gray-600">Visualiza y gestiona todas las requisiciones existentes.</p>
         </Link>
       </div>
     </div>
