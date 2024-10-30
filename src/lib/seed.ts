@@ -142,8 +142,9 @@ async function seed() {
         ) VALUES (?, ?, ?, ?, ?, ?, ?)
       `)
 
-      // Insertar facturas usando los IDs reales de las órdenes
+      // Facturas para cada orden
       const facturas = [
+        // Facturas para la primera orden (50% anticipo y 50% contra entrega)
         {
           ordenId: 1,
           numeroFactura: "FAC-2024-001",
@@ -161,6 +162,34 @@ async function seed() {
           fechaVencimiento: "2024-03-30",
           observaciones: "50% restante contra entrega",
           archivoNombre: "FAC-2024-002.pdf"
+        },
+        // Facturas para la segunda orden (30% anticipo, 40% avance y 30% contra entrega)
+        {
+          ordenId: 2,
+          numeroFactura: "FAC-2024-003",
+          fechaFactura: "2024-02-16",
+          monto: 4800.00,
+          fechaVencimiento: "2024-03-16",
+          observaciones: "30% de anticipo",
+          archivoNombre: "FAC-2024-003.pdf"
+        },
+        {
+          ordenId: 2,
+          numeroFactura: "FAC-2024-004",
+          fechaFactura: "2024-02-28",
+          monto: 6400.00,
+          fechaVencimiento: "2024-03-28",
+          observaciones: "40% avance de producción",
+          archivoNombre: "FAC-2024-004.pdf"
+        },
+        {
+          ordenId: 2,
+          numeroFactura: "FAC-2024-005",
+          fechaFactura: "2024-03-15",
+          monto: 4800.00,
+          fechaVencimiento: "2024-04-15",
+          observaciones: "30% contra entrega",
+          archivoNombre: "FAC-2024-005.pdf"
         }
       ]
 

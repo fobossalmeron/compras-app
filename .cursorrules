@@ -56,6 +56,8 @@ Key Conventions
   - Favor server components and Next.js SSR.
   - Use only for Web API access in small components.
   - Avoid for data fetching or state management.
+- Use Yarn exclusively for package management
+- Never use npm or npx commands
 
 Follow Next.js docs for Data Fetching, Rendering, and Routing: https://nextjs.org/docs
 Follow Prismic docs for Content Management: https://prismic.io/docs/setup-nextjs

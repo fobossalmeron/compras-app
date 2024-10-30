@@ -1,6 +1,13 @@
 import { Button } from "@/app/components/ui/button"
 import { Card } from "@/app/components/ui/card"
 import { Download, MoreHorizontal } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/app/components/ui/dropdown-menu"
+import { EditarFacturaForm } from "./editar-factura-form"
 
 interface Factura {
   id: number
@@ -16,9 +23,10 @@ interface Factura {
 interface FacturaCardProps {
   factura: Factura
   numeroOrden: string
+  onUpdate?: () => void
 }
 
-export function FacturaCard({ factura, numeroOrden }: FacturaCardProps) {
+export function FacturaCard({ factura, numeroOrden, onUpdate }: FacturaCardProps) {
   return (
     <Card className="border p-4 mb-4">
       <div className="space-y-4">
@@ -27,9 +35,19 @@ export function FacturaCard({ factura, numeroOrden }: FacturaCardProps) {
             <p className="font-semibold text-lg">{factura.numero_factura}</p>
             <p className="text-sm text-muted-foreground">Orden de compra: {numeroOrden}</p>
           </div>
-          <Button variant="ghost" size="icon">
-            <MoreHorizontal className="w-4 h-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <EditarFacturaForm 
+                factura={factura}
+                onSuccess={onUpdate}
+              />
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
           <div>

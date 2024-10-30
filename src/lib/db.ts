@@ -1,7 +1,9 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import { initSchema } from './schema';
 
 const db = new Database(path.join(process.cwd(), 'ordenes.db'));
+initSchema();
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS ordenes (

@@ -18,6 +18,7 @@ import {
 import placeholder from "./placeholder.jpg"
 import { ORDER_STATUS, ORDER_STATUS_LABELS } from '@/lib/constants'
 import { FacturaCard } from "@/app/components/factura-card"
+import { AgregarFacturaForm } from "@/app/components/agregar-factura-form"
 
 interface OrdenProps {
   orden: OrdenInput & { id: number }
@@ -45,15 +46,22 @@ export default function Component({ orden }: OrdenProps) {
     defaultValues: orden
   })
 
-  useEffect(() => {
-    // Cargar facturas al montar el componente
-    fetch(`/api/ordenes/${orden.id}/facturas`)
-      .then(res => res.json())
-      .then(data => {
-        console.log('Facturas cargadas:', data)
+  // Función para cargar las facturas
+  const cargarFacturas = async () => {
+    try {
+      const res = await fetch(`/api/ordenes/${orden.id}/facturas`)
+      if (res.ok) {
+        const data = await res.json()
         setFacturas(data)
-      })
-      .catch(err => console.error('Error al cargar facturas:', err))
+      }
+    } catch (err) {
+      console.error('Error al cargar facturas:', err)
+    }
+  }
+
+  // Cargar facturas al montar el componente
+  useEffect(() => {
+    cargarFacturas()
   }, [orden.id])
 
   async function onSubmit(data: OrdenInput) {
@@ -448,13 +456,14 @@ export default function Component({ orden }: OrdenProps) {
                   <FacturaCard 
                     key={factura.id} 
                     factura={factura} 
-                    numeroOrden={orden.numeroOrden}
+                    numeroOrden={orden.numeroOrden ?? ''}
+                    onUpdate={cargarFacturas}
                   />
                 ))}
-                <Button className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  Agregar factura
-                </Button>
+                <AgregarFacturaForm 
+                  ordenId={orden.id} 
+                  onSuccess={cargarFacturas}
+                />
               </Card>
             </div>
           </div>
