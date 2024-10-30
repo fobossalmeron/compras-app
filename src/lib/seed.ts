@@ -216,4 +216,45 @@ async function seed() {
   }
 }
 
+// Crear tabla de ordenes
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS ordenes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    numero_orden TEXT NOT NULL,
+    requisicion TEXT NOT NULL DEFAULT '',
+    requisicion_por TEXT NOT NULL,
+    fecha_requisicion TEXT NOT NULL,
+    eta TEXT NOT NULL,
+    status TEXT NOT NULL,
+    proveedor TEXT,
+    total REAL DEFAULT 0,
+    folio_requisicion_intelisis TEXT,
+    folio_cotizacion_intelisis TEXT,
+    numero_pedimento TEXT,
+    fecha_pedimento TEXT,
+    metodo_envio TEXT,
+    costo_flete REAL,
+    unidades_pedidas INTEGER,
+    unidades_recibir INTEGER,
+    numero_tracking TEXT,
+    entrada_compra TEXT
+  )
+`).run()
+
+// Crear tabla de productos_orden
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS productos_orden (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    orden_id INTEGER NOT NULL,
+    descripcion TEXT NOT NULL,
+    cantidad INTEGER NOT NULL,
+    observaciones TEXT,
+    proveedor TEXT,
+    marca TEXT,
+    modelo TEXT,
+    entrega_estimada TEXT,
+    FOREIGN KEY (orden_id) REFERENCES ordenes (id)
+  )
+`).run()
+
 seed().catch(console.error)
