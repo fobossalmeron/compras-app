@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/app/components/ui/card";
-import { formatearFecha, formatCurrency } from "@/lib/utils";
+import { formatDate, formatCurrency } from "@/lib/utils";
 import { ResumenProveedor } from "@/lib/types";
 
 export default function Component() {
@@ -91,7 +91,7 @@ export default function Component() {
                         </div>
                         <div className="text-lg   ">
                           {proveedor.proxima_fecha_vencimiento
-                            ? formatearFecha(
+                            ? formatDate(
                                 proveedor.proxima_fecha_vencimiento
                               )
                             : "No disponible"}

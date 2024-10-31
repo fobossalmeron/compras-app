@@ -19,6 +19,7 @@ import { Textarea } from "@/app/components/ui/textarea";
 import { SearchCombobox } from "./SearchCombobox";
 import { useRouter } from "next/navigation";
 import { ORDER_STATUS } from "@/lib/constants";
+import { formatDate, getCurrentDate, toUTC } from "@/lib/utils"
 
 // Mock data for products
 const products = [
@@ -66,9 +67,8 @@ export function FormularioRequisicion() {
   const [openProduct, setOpenProduct] = React.useState(false);
   const [openRequiredDate, setOpenRequiredDate] = React.useState(false);
 
-  // Formatear la fecha actual
-  const currentDate = new Date() // Guardamos la fecha como objeto Date
-  const formattedCurrentDate = format(currentDate, "PPP", { locale: es })
+  // Usar getCurrentDate para obtener la fecha actual en CDMX
+  const currentDate = getCurrentDate()
 
   React.useEffect(() => {
     console.log("Estado actual de selectedProducts:", selectedProducts);
@@ -123,14 +123,12 @@ export function FormularioRequisicion() {
       // Generar nuevo código de requisición
       const requisitionCode = `REQ-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, "0")}`;
 
-      // Obtener la fecha actual y formatearla correctamente
-      const fechaRequisicion = format(new Date(), "yyyy-MM-dd");
-
+      // Usar toUTC para convertir las fechas a UTC antes de enviarlas
       const orderData = {
         orderCode: requisitionCode,
         requisicionPor: requestedBy,
-        fechaRequisicion: fechaRequisicion, // Usar la fecha formateada
-        eta: format(requiredDate, "yyyy-MM-dd"),
+        fechaRequisicion: toUTC(getCurrentDate()).toISOString(),
+        eta: toUTC(requiredDate).toISOString(),
         status: ORDER_STATUS.REQUISICION_SISTEMA,
         productos: selectedProducts.map((item) => ({
           descripcion: item.product.description,
@@ -222,7 +220,7 @@ export function FormularioRequisicion() {
               <div className="space-y-2">
                 <Label>Fecha de requisición</Label>
                 <div className="mt-1.5 p-2 bg-gray-200 rounded-md text-sm text-muted-foreground">
-                {format(currentDate, 'dd/MM/yyyy')}
+                  {formatDate(currentDate, 'dd/MM/yyyy')}
                 </div>
               </div>
             </div>

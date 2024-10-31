@@ -9,6 +9,7 @@ import Link from "next/link"
 import { ORDER_STATUS, STATUS_MAP } from '@/lib/constants'
 import { OrderStatus } from '@/lib/constants'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+import { formatDate, getCurrentDate } from "@/lib/utils"
 
 interface Orden {
   id: number
@@ -159,7 +160,7 @@ export default function OrdenesPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-gray-500">ETA:</span>
-                          <span className="text-sm font-medium">{orden.eta}</span>
+                          <span className="text-sm font-medium">{formatDate(orden.eta)}</span>
                         </div>
                       </div>
                       <div className="flex items-center">
@@ -213,7 +214,7 @@ export default function OrdenesPage() {
                                             Req: {orden.requisicion}
                                           </p>
                                           <p className="text-sm text-muted-foreground">
-                                            ETA: {orden.eta}
+                                            ETA: {formatDate(orden.eta)}
                                           </p>
                                         </Card>
                                       </Link>

@@ -2,6 +2,7 @@ import { db } from "@/lib/db"
 import { NextResponse } from "next/server"
 import { ORDER_STATUS } from '@/lib/constants'
 import { headers } from 'next/headers'
+import { toUTC, getCurrentDate } from "@/lib/utils"
 
 interface OrdenDB {
   id: number
@@ -123,11 +124,15 @@ export async function PUT(
     
     const stmt = db.prepare(`
       UPDATE ordenes 
-      SET status = ?
+      SET status = ?, updated_at = ?
       WHERE id = ?
     `)
 
-    const result = stmt.run(data.status, params.id)
+    const result = stmt.run(
+      data.status, 
+      toUTC(getCurrentDate()).toISOString(),
+      params.id
+    )
 
     if (result.changes === 0) {
       return NextResponse.json(
