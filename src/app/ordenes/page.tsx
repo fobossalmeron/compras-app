@@ -99,9 +99,8 @@ export default function OrdenesPage() {
 
       {/* Main Content */}
       <div className="flex-1 p-6">
-        <ScrollArea className="h-[calc(100vh-8rem)]">
-          {viewMode === 'list' ? (
-            // Vista de Lista
+        {viewMode === 'list' ? (
+          <ScrollArea className="h-[calc(100vh-8rem)]">
             <div className="grid gap-4">
               {ordenes.map((orden) => (
                 <Link key={orden.id} href={`/ordenes/${orden.id}`}>
@@ -109,8 +108,16 @@ export default function OrdenesPage() {
                     <div className="flex justify-between items-start">
                       <div className="space-y-2">
                         <div className="flex items-center gap-3">
-                          <span className="font-medium">OC: {orden.order_code}</span>
-                          <span className="text-gray-500 text-sm">Req: {orden.requisicion}</span>
+                          {orden.order_code !== "OC por definir" ? (
+                            <>
+                              <span className="font-medium text-2xl">OC: {orden.order_code}</span>
+                              <span className="text-gray-500 text-sm">Req: {orden.requisicion}</span>
+                            </>
+                          ) : (
+                            <span className="text-gray-500 text-2xl font-medium">
+                              Requisición: {orden.requisicion}
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-gray-500">ETA:</span>
@@ -127,13 +134,15 @@ export default function OrdenesPage() {
                 </Link>
               ))}
             </div>
-          ) : (
-            // Vista Kanban
-            <div className="grid grid-cols-4 gap-4">
+          </ScrollArea>
+        ) : (
+          // Vista Kanban con scroll horizontal
+          <div className="h-[calc(100vh-8rem)] overflow-auto">
+            <div className="flex gap-4 min-w-max pb-4">
               {columns.map(column => (
-                <div key={column.id} className="flex flex-col h-full">
+                <div key={column.id} className="w-[350px] flex-shrink-0">
                   <h3 className="font-medium mb-3 px-2">{column.title}</h3>
-                  <Card className="flex-1 p-4 bg-gray-50/50">
+                  <Card className="p-4 bg-gray-50/50">
                     <div className="space-y-3">
                       {ordenes
                         .filter(orden => orden.status === column.id)
@@ -155,8 +164,8 @@ export default function OrdenesPage() {
                 </div>
               ))}
             </div>
-          )}
-        </ScrollArea>
+          </div>
+        )}
       </div>
     </div>
   )
