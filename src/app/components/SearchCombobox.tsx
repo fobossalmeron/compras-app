@@ -21,8 +21,7 @@ import {
 interface Product {
   id: number
   description: string
-  brand: string
-  model: string
+  marcaModelo: string
   supplier: string
   estimatedDelivery: string
 }
@@ -48,8 +47,7 @@ export function SearchCombobox({ products, onSelect }: SearchComboboxProps) {
     const newProduct: Product = {
       id: Math.random(), // Temporal ID
       description: inputValue,
-      brand: "Personalizado",
-      model: "N/A",
+      marcaModelo: "Por definir",
       supplier: "Por definir",
       estimatedDelivery: "Por definir"
     };
@@ -97,7 +95,7 @@ export function SearchCombobox({ products, onSelect }: SearchComboboxProps) {
                     <div className="flex flex-col">
                       <span className="font-medium">{product.description}</span>
                       <span className="text-sm text-muted-foreground">
-                        {product.brand} - {product.model}
+                        {product.marcaModelo}
                       </span>
                     </div>
                   </div>

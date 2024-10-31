@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import {
   Form,
   FormControl,
@@ -10,40 +10,57 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/app/components/ui/form"
-import { Input } from "@/app/components/ui/input"
-import { Textarea } from "@/app/components/ui/textarea"
-import { Button } from "@/app/components/ui/button"
+} from "@/app/components/ui/form";
+import { Input } from "@/app/components/ui/input";
+import { Textarea } from "@/app/components/ui/textarea";
+import { Button } from "@/app/components/ui/button";
+import { Factura } from "@/app/types/factura";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { CalendarIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover";
+import { Calendar } from "@/app/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 export const facturaFormSchema = z.object({
-  numero_factura: z.string().min(1, "El número de factura es requerido"),
-  fecha_factura: z.string().min(1, "La fecha de factura es requerida"),
+  numeroFactura: z.string().min(1, "El número de factura es requerido"),
+  fechaFactura: z.string().min(1, "La fecha de factura es requerida"),
   monto: z.string().min(1, "El monto es requerido"),
-  fecha_vencimiento: z.string().min(1, "La fecha de vencimiento es requerida"),
+  anticipo: z.string().optional(),
+  fechaVencimiento: z.string().min(1, "La fecha de vencimiento es requerida"),
   observaciones: z.string().optional(),
-})
+  archivoNombre: z.string().optional(),
+});
 
-export type FacturaFormValues = z.infer<typeof facturaFormSchema>
-
-interface FacturaFormProps {
-  defaultValues: FacturaFormValues
-  onSubmit: (values: FacturaFormValues) => Promise<void>
-  isLoading: boolean
-  onCancel: () => void
-  submitLabel: string
+export interface FacturaFormValues {
+  numeroFactura: string;
+  fechaFactura: string;
+  monto: string;
+  anticipo?: string;
+  fechaVencimiento: string;
+  observaciones?: string;
+  archivoNombre?: string;
 }
 
-export function FacturaForm({ 
-  defaultValues, 
-  onSubmit, 
-  isLoading, 
-  onCancel,
-  submitLabel 
+interface FacturaFormProps {
+  defaultValues: FacturaFormValues;
+  onSubmit: (data: FacturaFormValues) => void;
+  onCancel?: () => void;
+  isLoading?: boolean;
+  submitLabel?: string;
+}
+
+export function FacturaForm({
+  defaultValues,
+  onSubmit,
+  onCancel = () => {},
+  isLoading = false,
+  submitLabel = "Guardar",
 }: FacturaFormProps) {
   const form = useForm<FacturaFormValues>({
     resolver: zodResolver(facturaFormSchema),
-    defaultValues
-  })
+    defaultValues,
+  });
 
   return (
     <Form {...form}>
@@ -51,7 +68,7 @@ export function FacturaForm({
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="numero_factura"
+            name="numeroFactura"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Número de Factura</FormLabel>
@@ -64,15 +81,70 @@ export function FacturaForm({
           />
           <FormField
             control={form.control}
+            name="fechaFactura"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Fecha de Factura</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {field.value ? format(new Date(field.value), "PPP", { locale: es }) : "Seleccionar fecha"}
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={field.value ? new Date(field.value) : undefined}
+                      onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="anticipo"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Anticipo</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    {...field}
+                    placeholder="0.00"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
             name="monto"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Monto</FormLabel>
+                <FormLabel>Monto Total</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="number" 
-                    step="0.01" 
-                    {...field} 
+                  <Input
+                    type="number"
+                    step="0.01"
+                    {...field}
                     placeholder="0.00"
                   />
                 </FormControl>
@@ -85,25 +157,50 @@ export function FacturaForm({
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="fecha_factura"
+            name="fechaVencimiento"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Fecha de Factura</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
+                <FormLabel>Fecha de Vencimiento</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {field.value ? format(new Date(field.value), "PPP", { locale: es }) : "Seleccionar fecha"}
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={field.value ? new Date(field.value) : undefined}
+                      onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
                 <FormMessage />
               </FormItem>
             )}
           />
           <FormField
             control={form.control}
-            name="fecha_vencimiento"
+            name="archivoNombre"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Fecha de Vencimiento</FormLabel>
+                <FormLabel>Archivo de Factura</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} />
+                  <Input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    className="cursor-pointer"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -118,10 +215,7 @@ export function FacturaForm({
             <FormItem>
               <FormLabel>Observaciones</FormLabel>
               <FormControl>
-                <Textarea 
-                  {...field} 
-                  placeholder="Ej: 50% de anticipo"
-                />
+                <Textarea {...field} placeholder="Ej: 50% de anticipo" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -143,5 +237,5 @@ export function FacturaForm({
         </div>
       </form>
     </Form>
-  )
+  );
 }

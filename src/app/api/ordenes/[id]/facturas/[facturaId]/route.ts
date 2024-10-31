@@ -18,21 +18,30 @@ export async function GET(
 
     return NextResponse.json(factura)
   } catch (error) {
+    console.error('Error en GET:', error)
     return NextResponse.json({ error: "Error al obtener la factura" }, { status: 500 })
   }
 }
 
-// PUT: Actualizar una factura
+// PUT: Actualizar una factura existente
 export async function PUT(
   request: Request,
   { params }: { params: { id: string, facturaId: string } }
 ) {
   try {
-    const data = await request.json()
+    const data = await request.json();
 
-    // Validar datos requeridos
-    if (!data.numero_factura || !data.fecha_factura || !data.monto || !data.fecha_vencimiento) {
-      return NextResponse.json({ error: "Faltan datos requeridos" }, { status: 400 })
+    // Verificar que la factura existe y pertenece a la orden
+    const facturaExistente = db.prepare(`
+      SELECT 1 FROM facturas 
+      WHERE id = ? AND orden_id = ?
+    `).get(params.facturaId, params.id);
+
+    if (!facturaExistente) {
+      return NextResponse.json(
+        { error: "Factura no encontrada" },
+        { status: 404 }
+      );
     }
 
     const stmt = db.prepare(`
@@ -40,30 +49,43 @@ export async function PUT(
       SET 
         numero_factura = ?,
         fecha_factura = ?,
-        monto = ?,
+        monto_total = ?,
+        anticipo = ?,
         fecha_vencimiento = ?,
         observaciones = ?,
-        updated_at = CURRENT_TIMESTAMP
+        archivo_nombre = ?
       WHERE id = ? AND orden_id = ?
-    `)
+    `);
 
     const result = stmt.run(
-      data.numero_factura,
-      data.fecha_factura,
+      data.numeroFactura,
+      data.fechaFactura,
       data.monto,
-      data.fecha_vencimiento,
+      data.anticipo || null,
+      data.fechaVencimiento,
       data.observaciones || null,
+      data.archivoNombre || null,
       params.facturaId,
       params.id
-    )
+    );
 
     if (result.changes === 0) {
-      return NextResponse.json({ error: "Factura no encontrada" }, { status: 404 })
+      throw new Error("No se pudo actualizar la factura");
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({
+      message: "Factura actualizada exitosamente",
+      id: params.facturaId,
+    });
   } catch (error) {
-    return NextResponse.json({ error: "Error al actualizar la factura" }, { status: 500 })
+    console.error("Error al actualizar factura:", error);
+    return NextResponse.json(
+      {
+        error: "Error al actualizar factura",
+        details: error instanceof Error ? error.message : "Error desconocido",
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -83,6 +105,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
+    console.error('Error al eliminar factura:', error)
     return NextResponse.json({ error: "Error al eliminar la factura" }, { status: 500 })
   }
 } 

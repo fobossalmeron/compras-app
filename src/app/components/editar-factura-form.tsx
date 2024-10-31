@@ -5,31 +5,27 @@ import { Modal } from "@/app/components/ui/modal"
 import { Pencil } from "lucide-react"
 import { DropdownMenuItem } from "@/app/components/ui/dropdown-menu"
 import { FacturaForm, type FacturaFormValues } from "./factura-form"
+import { FacturaDB } from "../types/factura"
+import { useRouter } from "next/navigation"
 
 interface EditarFacturaFormProps {
-  factura: {
-    id: number
-    orden_id: number
-    numero_factura: string
-    fecha_factura: string
-    monto: number
-    fecha_vencimiento: string
-    observaciones: string
-    archivo_nombre: string
-  }
+  factura: FacturaDB,
   onSuccess?: () => void
 }
 
 export function EditarFacturaForm({ factura, onSuccess }: EditarFacturaFormProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
 
   const defaultValues: FacturaFormValues = {
-    numero_factura: factura.numero_factura,
-    fecha_factura: new Date(factura.fecha_factura).toISOString().split('T')[0],
-    monto: factura.monto.toString(),
-    fecha_vencimiento: new Date(factura.fecha_vencimiento).toISOString().split('T')[0],
-    observaciones: factura.observaciones,
+    numeroFactura: factura.numero_factura,
+    fechaFactura: new Date(factura.fecha_factura).toISOString().split('T')[0],
+    monto: factura.monto_total.toString(),
+    anticipo: factura.anticipo?.toString() || '',
+    fechaVencimiento: new Date(factura.fecha_vencimiento).toISOString().split('T')[0],
+    observaciones: factura.observaciones || '',
+    archivoNombre: factura.archivo_nombre || ''
   }
 
   async function onSubmit(values: FacturaFormValues) {
@@ -37,16 +33,37 @@ export function EditarFacturaForm({ factura, onSuccess }: EditarFacturaFormProps
       setIsLoading(true)
       const response = await fetch(`/api/ordenes/${factura.orden_id}/facturas/${factura.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        headers: { 
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          numeroFactura: values.numeroFactura,
+          fechaFactura: values.fechaFactura,
+          monto: parseFloat(values.monto),
+          anticipo: values.anticipo ? parseFloat(values.anticipo) : null,
+          fechaVencimiento: values.fechaVencimiento,
+          observaciones: values.observaciones || null,
+          archivoNombre: values.archivoNombre || null
+        }),
       })
 
-      if (!response.ok) throw new Error("Error al actualizar la factura")
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Error al actualizar la factura");
+      }
 
       setIsOpen(false)
-      if (onSuccess) onSuccess()
+      
+      // Revalidar los datos
+      router.refresh()
+      
+      // Llamar al callback de éxito si existe
+      if (onSuccess) {
+        onSuccess()
+      }
     } catch (error) {
       console.error(error)
+      throw error;
     } finally {
       setIsLoading(false)
     }

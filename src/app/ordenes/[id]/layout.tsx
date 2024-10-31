@@ -2,6 +2,9 @@ import { obtenerOrden } from "@/app/actions/ordenes"
 import { notFound } from "next/navigation"
 import Component from "./page"
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function Layout({
   params,
 }: {

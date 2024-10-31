@@ -1,5 +1,6 @@
 import { db } from "@/lib/db"
 import { NextResponse } from "next/server"
+import { headers } from 'next/headers'
 
 export async function GET() {
   try {
@@ -11,8 +12,7 @@ export async function GET() {
         GROUP_CONCAT(po.cantidad) as productos_cantidad,
         GROUP_CONCAT(po.observaciones) as productos_observaciones,
         GROUP_CONCAT(po.proveedor) as productos_proveedor,
-        GROUP_CONCAT(po.marca) as productos_marca,
-        GROUP_CONCAT(po.modelo) as productos_modelo,
+        GROUP_CONCAT(po.marca_modelo) as productos_marca_modelo,
         GROUP_CONCAT(po.entrega_estimada) as productos_entrega_estimada
       FROM ordenes o
       LEFT JOIN productos_orden po ON o.id = po.orden_id
@@ -21,7 +21,14 @@ export async function GET() {
     `).all();
 
     console.log('Órdenes obtenidas:', JSON.stringify(ordenes, null, 2))
-    return NextResponse.json(ordenes)
+
+    // Agregar headers para prevenir caché
+    const response = NextResponse.json(ordenes)
+    response.headers.set('Cache-Control', 'no-store')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
+
+    return response
   } catch (error) {
     console.error('Error al obtener órdenes:', error)
     return NextResponse.json({ error: 'Error al obtener órdenes' }, { status: 500 })
@@ -44,7 +51,7 @@ export async function POST(request: Request) {
       // Insertar la orden
       const orderResult = db.prepare(`
         INSERT INTO ordenes (
-          numero_orden,
+          order_code,
           requisicion,
           requisicion_por,
           fecha_requisicion,
@@ -54,8 +61,8 @@ export async function POST(request: Request) {
           total
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
-        data.numeroOrden,
-        data.numeroOrden,
+        'OC por definir', // Número de orden vacío inicialmente
+        data.orderCode, // Usamos el número de requisición como referencia
         data.requisicionPor,
         data.fechaRequisicion,
         data.eta,
@@ -77,22 +84,21 @@ export async function POST(request: Request) {
           cantidad,
           observaciones,
           proveedor,
-          marca,
-          modelo,
+          marca_modelo,
           entrega_estimada
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
       `)
 
       for (const producto of data.productos) {
         console.log('Insertando producto:', producto)
+        
         insertProductStmt.run(
           newOrderId,
           producto.descripcion,
           producto.cantidad,
           producto.observaciones,
           producto.proveedor,
-          producto.marca,
-          producto.modelo,
+          producto.marcaModelo,
           producto.entregaEstimada
         )
       }
@@ -117,3 +123,4 @@ export async function POST(request: Request) {
     )
   }
 } 
+

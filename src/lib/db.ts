@@ -1,47 +1,42 @@
 import Database from 'better-sqlite3';
 import path from 'path';
-import { initSchema } from './schema';
+import fs from 'fs';
 
-const db = new Database(path.join(process.cwd(), 'ordenes.db'));
-initSchema();
+// Definimos la ruta al directorio data
+const dataDir = path.join(process.cwd(), 'data');
+const dbPath = path.join(dataDir, 'database.sqlite');
 
+// Creamos el directorio si no existe
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+// Creamos una única instancia de la conexión
+const db = new Database(dbPath);
+
+// Aseguramos que las tablas existan
 db.exec(`
-  CREATE TABLE IF NOT EXISTS ordenes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    numero_orden TEXT NOT NULL,
-    requisicion TEXT NOT NULL,
-    eta TEXT NOT NULL,
-    requisicion_por TEXT NOT NULL,
-    fecha_requisicion TEXT,
-    folio_requisicion_intelisis TEXT,
-    folio_cotizacion_intelisis TEXT,
-    total REAL,
-    proveedor TEXT NOT NULL,
-    numero_pedimento TEXT,
-    fecha_pedimento TEXT,
-    metodo_envio TEXT,
-    costo_flete REAL,
-    unidades_pedidas INTEGER,
-    unidades_recibir INTEGER,
-    numero_tracking TEXT,
-    entrada_compra TEXT,
-    status TEXT NOT NULL DEFAULT 'requisicion_sistema',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-
   CREATE TABLE IF NOT EXISTS facturas (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    orden_id INTEGER NOT NULL,
+    orden_id INTEGER,
+    order_code TEXT,
     numero_factura TEXT NOT NULL,
-    fecha_factura TEXT NOT NULL,
-    monto REAL NOT NULL,
-    fecha_vencimiento TEXT NOT NULL,
+    fecha_factura DATE NOT NULL,
+    monto_total DECIMAL(10,2) NOT NULL,
+    anticipo DECIMAL(10,2) DEFAULT NULL,
+    fecha_vencimiento DATE NOT NULL,
     observaciones TEXT,
     archivo_nombre TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (orden_id) REFERENCES ordenes(id)
+    proveedor TEXT NOT NULL,
+    estado TEXT NOT NULL DEFAULT 'PENDIENTE'
+  );
+
+  CREATE TABLE IF NOT EXISTS anticipos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    factura_id INTEGER NOT NULL,
+    monto DECIMAL(10,2) NOT NULL,
+    fecha DATE NOT NULL,
+    FOREIGN KEY (factura_id) REFERENCES facturas(id)
   );
 `);
 

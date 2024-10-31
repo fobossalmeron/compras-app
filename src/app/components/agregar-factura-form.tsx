@@ -16,10 +16,10 @@ export function AgregarFacturaForm({ ordenId, onSuccess }: AgregarFacturaFormPro
   const [isLoading, setIsLoading] = useState(false)
 
   const defaultValues: FacturaFormValues = {
-    numero_factura: "",
-    fecha_factura: new Date().toISOString().split('T')[0],
+    numeroFactura: "",
+    fechaFactura: new Date().toISOString().split('T')[0],
     monto: "",
-    fecha_vencimiento: "",
+    fechaVencimiento: "",
     observaciones: "",
   }
 
@@ -28,8 +28,18 @@ export function AgregarFacturaForm({ ordenId, onSuccess }: AgregarFacturaFormPro
       setIsLoading(true)
       const response = await fetch(`/api/ordenes/${ordenId}/facturas`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          numeroFactura: values.numeroFactura,
+          fechaFactura: values.fechaFactura,
+          monto: parseFloat(values.monto),
+          anticipo: values.anticipo ? parseFloat(values.anticipo) : undefined,
+          fechaVencimiento: values.fechaVencimiento,
+          observaciones: values.observaciones,
+          archivoNombre: values.archivoNombre
+        }),
       })
 
       if (!response.ok) throw new Error("Error al crear la factura")

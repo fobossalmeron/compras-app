@@ -6,14 +6,6 @@ import { Card } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/app/components/ui/command";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -33,32 +25,28 @@ const products = [
   {
     id: 1,
     description: "Resina compuesta Z350",
-    brand: "3M",
-    model: "Z350 XT",
+    marcaModelo: "3M Z350 XT",
     supplier: "Dental Depot",
     estimatedDelivery: "1 semana",
   },
   {
     id: 2,
     description: "Guantes de nitrilo",
-    brand: "SafeTouch",
-    model: "Medium",
+    marcaModelo: "SafeTouch Medium",
     supplier: "Medical Supplies",
     estimatedDelivery: "3 días",
   },
   {
     id: 3,
     description: "Anestesia dental lidocaína",
-    brand: "Septodont",
-    model: "Articaine 4%",
+    marcaModelo: "Septodont Articaine 4%",
     supplier: "Dental Express",
     estimatedDelivery: "1 semana",
   },
   {
     id: 4,
     description: "Fresas de diamante",
-    brand: "Brasseler",
-    model: "FG 330",
+    marcaModelo: "Brasseler FG 330",
     supplier: "Dental Depot",
     estimatedDelivery: "5 días",
   },
@@ -79,7 +67,8 @@ export function FormularioRequisicion() {
   const [openRequiredDate, setOpenRequiredDate] = React.useState(false);
 
   // Formatear la fecha actual
-  const currentDate = format(new Date(), "PPP", { locale: es });
+  const currentDate = new Date() // Guardamos la fecha como objeto Date
+  const formattedCurrentDate = format(currentDate, "PPP", { locale: es })
 
   React.useEffect(() => {
     console.log("Estado actual de selectedProducts:", selectedProducts);
@@ -91,21 +80,14 @@ export function FormularioRequisicion() {
 
   const handleAddProduct = React.useCallback(
     (product: (typeof products)[0]) => {
-      console.log("=== handleAddProduct ===");
-      console.log("Producto a agregar:", product);
-
       setSelectedProducts((prevProducts) => {
-        console.log("Estado previo:", prevProducts);
         if (prevProducts.some((p) => p.product.id === product.id)) {
-          console.log("Producto ya existe en la lista");
           return prevProducts;
         }
-        const newProducts = [
-          ...prevProducts,
+        return [
           { product, quantity: 1, observations: "" },
+          ...prevProducts,
         ];
-        console.log("Nuevos productos:", newProducts);
-        return newProducts;
       });
 
       setOpenProduct(false);
@@ -139,24 +121,28 @@ export function FormularioRequisicion() {
 
     try {
       // Generar nuevo código de requisición
-      const requisitionCode = `REQ-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+      const requisitionCode = `REQ-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, "0")}`;
+
+      // Obtener la fecha actual y formatearla correctamente
+      const fechaRequisicion = format(new Date(), "yyyy-MM-dd");
 
       const orderData = {
-        numeroOrden: requisitionCode,
+        orderCode: requisitionCode,
         requisicionPor: requestedBy,
-        fechaRequisicion: format(new Date(), "yyyy-MM-dd"),
+        fechaRequisicion: fechaRequisicion, // Usar la fecha formateada
         eta: format(requiredDate, "yyyy-MM-dd"),
         status: ORDER_STATUS.REQUISICION_SISTEMA,
-        productos: selectedProducts.map(item => ({
+        productos: selectedProducts.map((item) => ({
           descripcion: item.product.description,
           cantidad: item.quantity,
           observaciones: item.observations,
           proveedor: item.product.supplier,
-          marca: item.product.brand,
-          modelo: item.product.model,
-          entregaEstimada: item.product.estimatedDelivery
-        }))
+          marcaModelo: item.product.marcaModelo,
+          entregaEstimada: item.product.estimatedDelivery,
+        })),
       };
+
+      console.log("Enviando datos:", orderData); // Para debugging
 
       const response = await fetch("/api/ordenes", {
         method: "POST",
@@ -178,144 +164,156 @@ export function FormularioRequisicion() {
   };
 
   return (
-    <div className="container mx-auto py-6 px-4">
-      <h1 className="text-2xl font-bold mb-6">Nueva Requisición</h1>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Requested By */}
-          <div className="space-y-2">
-            <Label>Requisición por</Label>
-            <Input
-              value={requestedBy}
-              onChange={(e) => setRequestedBy(e.target.value)}
-              placeholder="Nombre del solicitante"
-            />
-          </div>
+    <div className="flex flex-col h-screen bg-gray-100">
+      {/* Header */}
+      <div className="p-4 bg-white border-b">
+        <div className="flex justify-between items-center">
+          <h1 className="text-xl font-semibold">Nueva Requisición</h1>
+        </div>
+      </div>
 
-          {/* Required Date Picker */}
-          <div className="space-y-2 max-w-52">
-            <Label>Fecha requerida</Label>
-            <Popover open={openRequiredDate} onOpenChange={setOpenRequiredDate}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !requiredDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {requiredDate
-                    ? format(requiredDate, "PPP", { locale: es })
-                    : "Seleccionar fecha"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={requiredDate}
-                  onSelect={(date: Date | undefined) => {
-                    setRequiredDate(date);
-                    setOpenRequiredDate(false);
-                  }}
-                  initialFocus
+      <div className="p-4">
+        <Card className="max-w-3xl mx-auto bg-gray-50">
+          <form onSubmit={handleSubmit} className="space-y-6 p-6">
+            <div className="flex flex-col md:flex-row gap-6">
+              {/* Requested By */}
+              <div className="space-y-2 w-64">
+                <Label>Requisición por</Label>
+                <Input
+                  value={requestedBy}
+                  onChange={(e) => setRequestedBy(e.target.value)}
+                  placeholder="Nombre del solicitante"
                 />
-              </PopoverContent>
-            </Popover>
-          </div>
+              </div>
 
-          {/* Campo de fecha actual */}
-          <div className="space-y-2">
-            <Label>Fecha de requisición</Label>
-            <div className="p-2 bg-muted rounded-md text-sm">{currentDate}</div>
-          </div>
-        </div>
-
-        {/* Products Section */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-start gap-4">
-            <h2 className="text-lg font-semibold">Productos</h2>
-            <SearchCombobox products={products} onSelect={handleAddProduct} />
-          </div>
-
-          {/* Selected Products */}
-          <div className="space-y-4">
-            {selectedProducts.map((item, index) => (
-              <Card key={index} className="p-4">
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-medium">
-                        {item.product.description}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {item.product.brand} / {item.product.model}
-                      </p>
-                    </div>
-
+              {/* Required Date Picker */}
+              <div className="space-y-2 w-64">
+                <Label>Fecha requerida</Label>
+                <Popover open={openRequiredDate} onOpenChange={setOpenRequiredDate}>
+                  <PopoverTrigger asChild>
                     <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveProduct(index)}
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !requiredDate && "text-muted-foreground"
+                      )}
                     >
-                      <X className="h-4 w-4" />
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {requiredDate
+                        ? format(requiredDate, "PPP", { locale: es })
+                        : "Seleccionar fecha"}
                     </Button>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <Label>Proveedor</Label>
-                      <Input
-                        value={item.product.supplier}
-                        readOnly
-                        className="mt-1.5"
-                      />
-                    </div>
-                    <div>
-                      <Label>Entrega estimada</Label>
-                      <Input
-                        value={item.product.estimatedDelivery}
-                        readOnly
-                        className="mt-1.5"
-                      />
-                    </div>
-                    <div>
-                      <Label>Cantidad</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          handleQuantityChange(index, e.target.value)
-                        }
-                        className="mt-1.5"
-                      />
-                    </div>
-                    <div>
-                      <Label>Observaciones</Label>
-                      <Textarea
-                        value={item.observations}
-                        onChange={(e) =>
-                          handleObservationsChange(index, e.target.value)
-                        }
-                        className="mt-1.5"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={requiredDate}
+                      onSelect={(date: Date | undefined) => {
+                        setRequiredDate(date);
+                        setOpenRequiredDate(false);
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
 
-        {/* Submit Button */}
-        <Button 
-          type="submit" 
-          className="w-full md:w-auto"
-          disabled={!requestedBy || !requiredDate || selectedProducts.length === 0}
-        >
-          Crear requisición
-        </Button>
-      </form>
+              {/* Campo de fecha actual */}
+              <div className="space-y-2">
+                <Label>Fecha de requisición</Label>
+                <div className="mt-1.5 p-2 bg-gray-200 rounded-md text-sm text-muted-foreground">
+                {format(currentDate, 'dd/MM/yyyy')}
+                </div>
+              </div>
+            </div>
+
+            {/* Products Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-start gap-4">
+                <h2 className="text-lg font-semibold">Productos</h2>
+                <SearchCombobox products={products} onSelect={handleAddProduct} />
+              </div>
+
+              {/* Selected Products */}
+              <div className="space-y-4">
+                {selectedProducts.map((item, index) => (
+                  <Card key={index} className="p-4 max-w-3xl">
+                    <div className="space-y-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-medium">
+                            {item.product.description}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {item.product.marcaModelo}
+                          </p>
+                        </div>
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveProduct(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-3">
+                      <div>
+                          <Label>Cantidad</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) =>
+                              handleQuantityChange(index, e.target.value)
+                            }
+                            className="mt-1.5"
+                          />
+                        </div>
+                        <div>
+                          <Label>Proveedor</Label>
+                          <div className="mt-1.5 p-2 bg-gray-100 rounded-md text-sm text-muted-foreground">
+                            {item.product.supplier}
+                          </div>
+                        </div>
+                        <div>
+                          <Label>Entrega estimada</Label>
+                          <div className="mt-1.5 p-2 bg-gray-100 rounded-md text-sm text-muted-foreground">
+                            {item.product.estimatedDelivery}
+                          </div>
+                        </div>
+                        <div className="col-span-3">
+                          <Label>Observaciones</Label>
+                          <Textarea
+                            value={item.observations}
+                            onChange={(e) =>
+                              handleObservationsChange(index, e.target.value)
+                            }
+                            className="mt-1.5"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end">
+              <Button
+                type="submit"
+                className="w-full md:w-auto"
+                disabled={
+                  !requestedBy || !requiredDate || selectedProducts.length === 0
+                }
+              >
+                Crear requisición
+              </Button>
+            </div>
+          </form>
+        </Card>
+      </div>
     </div>
   );
 }

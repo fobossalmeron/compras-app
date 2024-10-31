@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 import { OrderStatus } from '@/lib/constants'
 
 export interface OrdenInput {
-  numeroOrden?: string
+  orderCode?: string
   requisicion: string[] | string
   eta: string
   requisicionPor: string
@@ -22,6 +22,12 @@ export interface OrdenInput {
   numeroTracking?: string
   entradaCompra?: string
   status: OrderStatus
+  productos?: {
+    descripcion: string;
+    cantidad: number;
+    marcaModelo: string;
+    observaciones: string;
+  }[];
 }
 
 export async function actualizarOrden(id: number, data: OrdenInput) {
@@ -52,12 +58,12 @@ export async function actualizarOrden(id: number, data: OrdenInput) {
 }
 
 export async function obtenerOrden(id: number) {
-  try {
-    const res = await fetch(`http://localhost:3000/api/ordenes/${id}`)
-    if (!res.ok) return null
-    return await res.json()
-  } catch (error) {
-    console.error('Error al obtener orden:', error)
-    return null
-  }
+  const res = await fetch(`http://localhost:3000/api/ordenes/${id}`, {
+    cache: 'no-store',
+    next: { revalidate: 0 }
+  })
+  
+  if (!res.ok) return null
+  
+  return res.json()
 } 

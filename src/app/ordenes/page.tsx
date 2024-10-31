@@ -11,7 +11,7 @@ import { OrderStatus } from '@/lib/constants'
 
 interface Orden {
   id: number
-  numero_orden: string
+  order_code: string
   requisicion: string
   eta: string
   proveedor: string
@@ -109,7 +109,7 @@ export default function OrdenesPage() {
                     <div className="flex justify-between items-start">
                       <div className="space-y-2">
                         <div className="flex items-center gap-3">
-                          <span className="font-medium">OC: {orden.numero_orden}</span>
+                          <span className="font-medium">OC: {orden.order_code}</span>
                           <span className="text-gray-500 text-sm">Req: {orden.requisicion}</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -140,7 +140,7 @@ export default function OrdenesPage() {
                         .map(orden => (
                           <Link key={orden.id} href={`/ordenes/${orden.id}`}>
                             <Card className="p-4 bg-white hover:shadow-md transition-shadow">
-                              <h4 className="font-medium">OC: {orden.numero_orden}</h4>
+                              <h4 className="font-medium">OC: {orden.order_code}</h4>
                               <p className="text-sm text-muted-foreground mt-1">
                                 Req: {orden.requisicion}
                               </p>

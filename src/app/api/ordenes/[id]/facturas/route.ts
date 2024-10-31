@@ -1,3 +1,4 @@
+import { FacturaDB, Factura } from "@/app/types/factura"
 import { db } from "@/lib/db"
 import { NextResponse } from "next/server"
 
@@ -7,9 +8,23 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const facturas = db.prepare(
+    const facturasDB = db.prepare(
       "SELECT * FROM facturas WHERE orden_id = ? ORDER BY fecha_factura DESC"
-    ).all(params.id)
+    ).all(params.id) as FacturaDB[];
+
+    const facturas: Factura[] = facturasDB.map(factura => ({
+      id: factura.id,
+      ordenId: factura.orden_id,
+      orderCode: factura.order_code,
+      numeroFactura: factura.numero_factura,
+      fechaFactura: factura.fecha_factura,
+      monto: factura.monto_total,
+      anticipo: factura.anticipo ?? undefined,
+      fechaVencimiento: factura.fecha_vencimiento,
+      observaciones: factura.observaciones ?? undefined,
+      archivoNombre: factura.archivo_nombre ?? undefined,
+      proveedor: factura.proveedor
+    }));
 
     return NextResponse.json(facturas)
   } catch (error) {
@@ -24,49 +39,65 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const data = await request.json()
-    console.log('Datos recibidos:', data)
-
-    // Validar que la orden existe
-    const orden = db.prepare('SELECT id FROM ordenes WHERE id = ?').get(params.id)
-    if (!orden) {
-      return NextResponse.json({ error: "Orden no encontrada" }, { status: 404 })
+    const data = await request.json();
+    
+    // Primero obtenemos la orden para obtener el proveedor y order_code
+    interface OrdenBasica {
+      order_code: string;
+      proveedor: string;
     }
+ 
+    const orden = db.prepare(`
+      SELECT order_code, proveedor 
+      FROM ordenes 
+      WHERE id = ?
+    `).get(params.id) as OrdenBasica;
 
-    // Validar datos requeridos
-    if (!data.numero_factura || !data.fecha_factura || !data.monto || !data.fecha_vencimiento) {
-      return NextResponse.json({ error: "Faltan datos requeridos" }, { status: 400 })
+    if (!orden) {
+      return NextResponse.json({ error: "Orden no encontrada" }, { status: 404 });
     }
 
     const stmt = db.prepare(`
       INSERT INTO facturas (
         orden_id,
+        order_code,
         numero_factura,
         fecha_factura,
-        monto,
+        monto_total,
+        anticipo,
         fecha_vencimiento,
-        observaciones
-      ) VALUES (?, ?, ?, ?, ?, ?)
-    `)
+        observaciones,
+        archivo_nombre,
+        proveedor
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
 
     const result = stmt.run(
       params.id,
-      data.numero_factura,
-      data.fecha_factura,
-      data.monto,
-      data.fecha_vencimiento,
-      data.observaciones || null
-    )
+      orden.order_code,
+      data.numeroFactura,
+      data.fechaFactura,
+      data.monto,  // Se insertará como monto_total en la BD
+      data.anticipo || null,
+      data.fechaVencimiento,
+      data.observaciones || null,
+      data.archivoNombre || null,
+      orden.proveedor
+    );
+
+    if (result.changes === 0) {
+      throw new Error("No se pudo insertar la factura");
+    }
 
     return NextResponse.json({ 
-      success: true, 
-      id: result.lastInsertRowid 
-    })
-
+      id: result.lastInsertRowid,
+      message: "Factura creada exitosamente" 
+    });
   } catch (error) {
-    console.error('Error al crear factura:', error)
+    console.error('Error al crear factura:', error);
     return NextResponse.json({ 
-      error: "Error al crear la factura" 
-    }, { status: 500 })
+      error: "Error al crear factura",
+      details: error instanceof Error ? error.message : "Error desconocido"
+    }, { status: 500 });
   }
 } 
