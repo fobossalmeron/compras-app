@@ -1,2 +1,1 @@
-- diseño de producto de nueva requisición: hacer más corto? 3 campos en una fila?
 - kabna no jala
