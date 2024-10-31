@@ -119,95 +119,29 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    console.log('PUT request params:', params)
-    const dataFromFrontend = await request.json()
-    console.log('Data received from frontend:', dataFromFrontend)
+    const data = await request.json()
     
-    // Validar campos requeridos
-    if (!dataFromFrontend.orderCode || !dataFromFrontend.requisicionPor || 
-        !dataFromFrontend.requisicion || !dataFromFrontend.eta || 
-        !dataFromFrontend.proveedor || !Object.values(ORDER_STATUS).includes(dataFromFrontend.status)) {
-      console.log('Validation failed:', {
-        hasorderCode: !!dataFromFrontend.orderCode,
-        hasRequisicionPor: !!dataFromFrontend.requisicionPor,
-        hasRequisicion: !!dataFromFrontend.requisicion,
-        hasEta: !!dataFromFrontend.eta,
-        hasProveedor: !!dataFromFrontend.proveedor,
-        hasValidStatus: Object.values(ORDER_STATUS).includes(dataFromFrontend.status),
-        receivedStatus: dataFromFrontend.status,
-        validStatuses: Object.values(ORDER_STATUS)
-      })
+    const stmt = db.prepare(`
+      UPDATE ordenes 
+      SET status = ?
+      WHERE id = ?
+    `)
+
+    const result = stmt.run(data.status, params.id)
+
+    if (result.changes === 0) {
       return NextResponse.json(
-        { error: "Faltan campos requeridos o status inválido" }, 
-        { status: 400 }
+        { error: "Orden no encontrada" },
+        { status: 404 }
       )
     }
 
-    const dataForDB = {
-      order_code: dataFromFrontend.orderCode,
-      requisicion: Array.isArray(dataFromFrontend.requisicion) ? 
-        dataFromFrontend.requisicion.join(', ') : 
-        dataFromFrontend.requisicion,
-      eta: dataFromFrontend.eta,
-      requisicion_por: dataFromFrontend.requisicionPor,
-      fecha_requisicion: dataFromFrontend.fechaRequisicion,
-      folio_requisicion_intelisis: dataFromFrontend.folioRequisicionIntelisis,
-      folio_cotizacion_intelisis: dataFromFrontend.folioCotizacionIntelisis,
-      total: dataFromFrontend.total,
-      proveedor: dataFromFrontend.proveedor,
-      numero_pedimento: dataFromFrontend.numeroPedimento,
-      fecha_pedimento: dataFromFrontend.fechaPedimento,
-      metodo_envio: dataFromFrontend.metodoEnvio,
-      costo_flete: dataFromFrontend.costoFlete,
-      unidades_pedidas: dataFromFrontend.unidadesPedidas,
-      unidades_recibir: dataFromFrontend.unidadesRecibir,
-      numero_tracking: dataFromFrontend.numeroTracking,
-      entrada_compra: dataFromFrontend.entradaCompra,
-      status: dataFromFrontend.status
-    }
-    console.log('Data transformed for DB:', dataForDB)
-    
-    const stmt = db.prepare(`
-      UPDATE ordenes SET 
-        order_code = @order_code,
-        requisicion = @requisicion,
-        eta = @eta,
-        requisicion_por = @requisicion_por,
-        fecha_requisicion = @fecha_requisicion,
-        folio_requisicion_intelisis = @folio_requisicion_intelisis,
-        folio_cotizacion_intelisis = @folio_cotizacion_intelisis,
-        total = @total,
-        proveedor = @proveedor,
-        numero_pedimento = @numero_pedimento,
-        fecha_pedimento = @fecha_pedimento,
-        metodo_envio = @metodo_envio,
-        costo_flete = @costo_flete,
-        unidades_pedidas = @unidades_pedidas,
-        unidades_recibir = @unidades_recibir,
-        numero_tracking = @numero_tracking,
-        entrada_compra = @entrada_compra,
-        status = @status,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = @id
-    `)
-
-    console.log('Executing DB update with:', { ...dataForDB, id: params.id })
-    try {
-      const result = stmt.run({
-        ...dataForDB,
-        id: params.id
-      })
-      console.log('DB update result:', result)
-      return NextResponse.json({ success: true })
-    } catch (dbError: any) {
-      console.error('Database error:', dbError)
-      return NextResponse.json({ error: "Error en la base de datos", details: dbError.message }, { status: 500 })
-    }
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error in PUT:', error)
-    return NextResponse.json({ 
-      error: "Error al actualizar la orden",
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    console.error('Error al actualizar orden:', error)
+    return NextResponse.json(
+      { error: "Error al actualizar la orden" },
+      { status: 500 }
+    )
   }
 } 

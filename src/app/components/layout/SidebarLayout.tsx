@@ -17,7 +17,7 @@ export function SidebarLayout({ className, children }: SidebarLayoutProps) {
       <div className="hidden lg:block fixed left-0 bottom-0 w-64 border-r bg-white top-0">
         <ScrollArea className="h-[calc(100vh-4rem)]">
           <div className="p-4">
-            <h1 className="text-2xl font-bold text-gray-800">Sistema de Compras</h1>
+            <h1 className="text-2xl font-bold text-blue-500">Compras Borgatta</h1>
           </div>
           <nav className="space-y-1 px-2">
             <Link href="/">
@@ -38,7 +38,7 @@ export function SidebarLayout({ className, children }: SidebarLayoutProps) {
               Cuentas por pagar
             </Button>
             </Link>
-            <Button variant="ghost" className="w-full justify-start gap-2">
+            <Button variant="ghost" className="w-full justify-start gap-2 opacity-50 cursor-not-allowed" disabled>
               <BadgeDollarSign className="w-4 h-4" />
               Precios
             </Button>

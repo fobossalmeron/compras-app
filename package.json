@@ -12,7 +12,7 @@
     "db:seed": "tsx src/db/seed.ts"
   },
   "dependencies": {
-    "@hello-pangea/dnd": "hello-pangea/dnd",
+    "@hello-pangea/dnd": "^17.0.0",
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-avatar": "^1.1.1",
     "@radix-ui/react-collapsible": "^1.1.1",
@@ -31,10 +31,7 @@
     "date-fns": "^4.1.0",
     "lucide-react": "^0.454.0",
     "next": "^14.2.10",
-    "next-nprogress-bar": "^2.3.13",
-    "next-share": "^0.27.0",
     "react": "^18.2.0",
-    "react-awesome-reveal": "^4.2.14",
     "react-day-picker": "8.10.1",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.53.1",

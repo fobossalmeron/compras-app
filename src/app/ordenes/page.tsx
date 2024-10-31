@@ -8,6 +8,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { ORDER_STATUS, STATUS_MAP } from '@/lib/constants'
 import { OrderStatus } from '@/lib/constants'
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 
 interface Orden {
   id: number
@@ -65,6 +66,43 @@ export default function OrdenesPage() {
     return STATUS_MAP[normalizedStatus] || { 
       label: 'Pendiente', 
       color: 'bg-gray-100 text-gray-800' 
+    }
+  }
+
+  const onDragEnd = async (result: any) => {
+    const { destination, source, draggableId } = result
+
+    // Si no hay destino válido o no hubo cambio, no hacemos nada
+    if (!destination || 
+        (destination.droppableId === source.droppableId)) {
+      return
+    }
+
+    const ordenId = parseInt(draggableId)
+    const newStatus = destination.droppableId
+
+    try {
+      const response = await fetch(`/api/ordenes/${ordenId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      })
+
+      if (!response.ok) throw new Error('Error al actualizar el status')
+
+      // Actualizar el estado local
+      setOrdenes(prevOrdenes => 
+        prevOrdenes.map(orden => 
+          orden.id === ordenId 
+            ? { ...orden, status: newStatus as OrderStatus }
+            : orden
+        )
+      )
+    } catch (error) {
+      console.error('Error al actualizar el status:', error)
+      // Aquí podrías mostrar un toast o mensaje de error
     }
   }
 
@@ -136,34 +174,62 @@ export default function OrdenesPage() {
             </div>
           </ScrollArea>
         ) : (
-          // Vista Kanban con scroll horizontal
+          // Vista Kanban con DnD
           <div className="h-[calc(100vh-8rem)] overflow-auto">
-            <div className="flex gap-4 min-w-max pb-4">
-              {columns.map(column => (
-                <div key={column.id} className="w-[350px] flex-shrink-0">
-                  <h3 className="font-medium mb-3 px-2">{column.title}</h3>
-                  <Card className="p-4 bg-gray-50/50">
-                    <div className="space-y-3">
-                      {ordenes
-                        .filter(orden => orden.status === column.id)
-                        .map(orden => (
-                          <Link key={orden.id} href={`/ordenes/${orden.id}`}>
-                            <Card className="p-4 bg-white hover:shadow-md transition-shadow">
-                              <h4 className="font-medium">OC: {orden.order_code}</h4>
-                              <p className="text-sm text-muted-foreground mt-1">
-                                Req: {orden.requisicion}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                ETA: {orden.eta}
-                              </p>
-                            </Card>
-                          </Link>
-                        ))}
-                    </div>
-                  </Card>
-                </div>
-              ))}
-            </div>
+            <DragDropContext onDragEnd={onDragEnd}>
+              <div className="flex gap-4 min-w-max pb-4">
+                {columns.map(column => (
+                  <div key={column.id} className="w-[350px] flex-shrink-0">
+                    <h3 className="font-medium mb-3 px-2">{column.title}</h3>
+                    <Droppable droppableId={column.id}>
+                      {(provided) => (
+                        <Card 
+                          className="p-4 bg-gray-50/50 min-h-[100px]"
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                        >
+                          <div className="space-y-3">
+                            {ordenes
+                              .filter(orden => orden.status === column.id)
+                              .map((orden, index) => (
+                                <Draggable 
+                                  key={orden.id} 
+                                  draggableId={orden.id.toString()} 
+                                  index={index}
+                                >
+                                  {(provided, snapshot) => (
+                                    <div
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
+                                    >
+                                      <Link href={`/ordenes/${orden.id}`}>
+                                        <Card 
+                                          className={`p-4 bg-white hover:shadow-md transition-shadow
+                                            ${snapshot.isDragging ? 'shadow-lg' : ''}`}
+                                        >
+                                          <h4 className="font-medium">OC: {orden.order_code}</h4>
+                                          <p className="text-sm text-muted-foreground mt-1">
+                                            Req: {orden.requisicion}
+                                          </p>
+                                          <p className="text-sm text-muted-foreground">
+                                            ETA: {orden.eta}
+                                          </p>
+                                        </Card>
+                                      </Link>
+                                    </div>
+                                  )}
+                                </Draggable>
+                              ))}
+                            {provided.placeholder}
+                          </div>
+                        </Card>
+                      )}
+                    </Droppable>
+                  </div>
+                ))}
+              </div>
+            </DragDropContext>
           </div>
         )}
       </div>
